@@ -1,0 +1,136 @@
+
+    <script>
+        // Get references to DOM elements
+        const taskInput = document.getElementById('taskInput');
+        const dueDateInput = document.getElementById('dueDateInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskList = document.getElementById('taskList');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+        let taskToDelete = null; // Variable to store the task element to be deleted
+
+        // Function to load tasks from localStorage
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(task => addTaskToDOM(task.text, task.dueDate, task.completed));
+        }
+
+        // Function to save tasks to localStorage
+        function saveTasks() {
+            const tasks = [];
+            taskList.querySelectorAll('.task-item').forEach(item => {
+                tasks.push({
+                    text: item.querySelector('.task-text').textContent,
+                    dueDate: item.querySelector('.task-date').textContent.replace('Due: ', ''),
+                    completed: item.classList.contains('completed')
+                });
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Function to add a task to the DOM
+        function addTaskToDOM(taskText, dueDate, isCompleted = false) {
+            // Create list item element
+            const listItem = document.createElement('li');
+            listItem.classList.add('task-item');
+            if (isCompleted) {
+                listItem.classList.add('completed');
+            }
+
+            // Create task content div
+            const taskContent = document.createElement('div');
+            taskContent.classList.add('task-content');
+
+            // Create task text span
+            const textSpan = document.createElement('span');
+            textSpan.classList.add('task-text');
+            textSpan.textContent = taskText;
+
+            // Create due date span
+            const dateSpan = document.createElement('span');
+            dateSpan.classList.add('task-date');
+            dateSpan.textContent = dueDate ? `Due: ${dueDate}` : 'No due date';
+
+            // Append text and date to task content
+            taskContent.appendChild(textSpan);
+            taskContent.appendChild(dateSpan);
+
+            // Create action buttons div
+            const actionButtons = document.createElement('div');
+            actionButtons.classList.add('action-buttons');
+
+            // Create complete button
+            const completeBtn = document.createElement('button');
+            completeBtn.classList.add('btn', 'btn-complete');
+            completeBtn.textContent = isCompleted ? 'Unmark' : 'Complete';
+            completeBtn.addEventListener('click', () => {
+                listItem.classList.toggle('completed');
+                completeBtn.textContent = listItem.classList.contains('completed') ? 'Unmark' : 'Complete';
+                saveTasks(); // Save tasks after completing/unmarking
+            });
+
+            // Create delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('btn', 'btn-delete');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => {
+                taskToDelete = listItem; // Set the task to be deleted
+                confirmationModal.classList.add('show'); // Show the modal
+            });
+
+            // Append buttons to action buttons div
+            actionButtons.appendChild(completeBtn);
+            actionButtons.appendChild(deleteBtn);
+
+            // Append content and buttons to list item
+            listItem.appendChild(taskContent);
+            listItem.appendChild(actionButtons);
+
+            // Append list item to the task list
+            taskList.appendChild(listItem);
+        }
+
+        // Event listener for adding a new task
+        addTaskBtn.addEventListener('click', () => {
+            const taskText = taskInput.value.trim();
+            const dueDate = dueDateInput.value; // YYYY-MM-DD format
+
+            if (taskText !== '') {
+                addTaskToDOM(taskText, dueDate);
+                saveTasks(); // Save tasks after adding
+                taskInput.value = ''; // Clear input field
+                dueDateInput.value = ''; // Clear due date field
+            } else {
+                // In a real application, you might show a more user-friendly error message
+                console.error("Task input cannot be empty.");
+            }
+        });
+
+        // Event listener for confirming deletion
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (taskToDelete) {
+                taskToDelete.remove(); // Remove the task from the DOM
+                saveTasks(); // Save tasks after deleting
+                taskToDelete = null; // Reset the task to delete
+                confirmationModal.classList.remove('show'); // Hide the modal
+            }
+        });
+
+        // Event listener for canceling deletion
+        cancelDeleteBtn.addEventListener('click', () => {
+            taskToDelete = null; // Reset the task to delete
+            confirmationModal.classList.remove('show'); // Hide the modal
+        });
+
+        // Load tasks when the page loads
+        document.addEventListener('DOMContentLoaded', loadTasks);
+    </script>
+</body>
+</html>
+
+
+
+
+
